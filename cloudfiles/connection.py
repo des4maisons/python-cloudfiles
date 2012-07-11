@@ -21,6 +21,10 @@ import  consts
 from    authentication import Authentication
 from    fjson     import json_loads
 
+import logging
+
+log = logging.getLogger(__name__)
+
 # Because HTTPResponse objects *have* to have read() called on them 
 # before they can be used again ...
 # pylint: disable-msg=W0612
@@ -56,6 +60,8 @@ class Connection(object):
         self.debuglevel = int(kwargs.get('debuglevel', 0))
         socket.setdefaulttimeout = int(kwargs.get('timeout', 5))
         self.auth = kwargs.has_key('auth') and kwargs['auth'] or None
+
+        self.evolve_request_id = kwargs.get('evolve_request_id', None)
         
         if not self.auth:
             authurl = kwargs.get('authurl', consts.default_authurl)
@@ -110,6 +116,7 @@ class Connection(object):
         if isinstance(hdrs, dict):
             headers.update(hdrs)
         
+        self._log_request(method, path, headers)
         # Send the request
         self.cdn_connection.request(method, path, data, headers)
 
@@ -121,12 +128,16 @@ class Connection(object):
 
         try:
             response = self.cdn_connection.getresponse()
-        except HTTPException:
+            self._log_response(response)
+        except HTTPException as e:
+            log.error(str(e))
             response = retry_request()
+            self._log_response(response, log.error)
 
         if response.status == 401:
             self._authenticate()
             response = retry_request()
+            self._log_response(response, log.error)
 
         return response
 
@@ -149,6 +160,8 @@ class Connection(object):
                    'X-Auth-Token': self.token}
         isinstance(hdrs, dict) and headers.update(hdrs)
         
+        self._log_request(method, path, headers)
+
         def retry_request():
             '''Re-connect and re-try a failed request once'''
             self.http_connect()
@@ -158,12 +171,16 @@ class Connection(object):
         try:
             self.connection.request(method, path, data, headers)
             response = self.connection.getresponse()
-        except HTTPException:
+            self._log_response(response)
+        except HTTPException as e:
+            log.error(str(e))
             response = retry_request()
+            self._log_response(response, log.error)
             
         if response.status == 401:
             self._authenticate()
             response = retry_request()
+            self._log_response(response, log.error)
 
         return response
 
@@ -398,6 +415,21 @@ class Connection(object):
         @return: an object representing the container
         """
         return self.get_container(key)
+
+
+    # Request/Response Logging {{{
+    def _log_response(self, response, logfn=log.debug):
+        logfn('Request ID: %s, Response from Cloud: status=%s; headers="%s"' % (
+            self.evolve_request_id,
+            str(response.status),
+            "; ".join(["%s=%s" % (k, v) for (k, v) in response.getheaders()]))
+        )
+
+    def _log_request(self, method, path, headers, logfn=log.debug):
+        logfn('Request ID: %s, Request to Cloud: method=%s, path=%s, headers="%s"' % (
+            self.evolve_request_id, method, path, headers)
+        )
+    # }}}
 
 class ConnectionPool(Queue):
     """
