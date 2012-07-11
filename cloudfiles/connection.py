@@ -130,7 +130,7 @@ class Connection(object):
             response = self.cdn_connection.getresponse()
             self._log_response(response)
         except HTTPException as e:
-            log.error(str(e))
+            self._log_http_exception(e)
             response = retry_request()
             self._log_response(response, log.error)
 
@@ -173,7 +173,7 @@ class Connection(object):
             response = self.connection.getresponse()
             self._log_response(response)
         except HTTPException as e:
-            log.error(str(e))
+            self._log_http_exception(e)
             response = retry_request()
             self._log_response(response, log.error)
             
@@ -429,6 +429,9 @@ class Connection(object):
         logfn('Request ID: %s, Request to Cloud: method=%s, path=%s, headers="%s"' % (
             self.evolve_request_id, method, path, headers)
         )
+
+    def _log_http_exception(self, e):
+        log.error('Request ID: %s, HttpException: %s' % repr(e))
     # }}}
 
 class ConnectionPool(Queue):
