@@ -431,7 +431,7 @@ class Connection(object):
         )
 
     def _log_http_exception(self, e):
-        log.error('Request ID: %s, HttpException: %s' % repr(e))
+        log.error('Request ID: %s, HttpException: %s' % (self.evolve_request_id, repr(e)))
     # }}}
 
 class ConnectionPool(Queue):
