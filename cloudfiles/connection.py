@@ -61,7 +61,7 @@ class Connection(object):
         socket.setdefaulttimeout = int(kwargs.get('timeout', 5))
         self.auth = kwargs.has_key('auth') and kwargs['auth'] or None
 
-        self.evolve_request_id = kwargs.get('evolve_request_id', None)
+        self.request_id = kwargs.get('request_id', None)
         
         if not self.auth:
             authurl = kwargs.get('authurl', consts.default_authurl)
@@ -420,18 +420,18 @@ class Connection(object):
     # Request/Response Logging {{{
     def _log_response(self, response, logfn=log.debug):
         logfn('Request ID: %s, Response from Cloud: status=%s; headers="%s"' % (
-            self.evolve_request_id,
+            self.request_id,
             str(response.status),
             "; ".join(["%s=%s" % (k, v) for (k, v) in response.getheaders()]))
         )
 
     def _log_request(self, method, path, headers, logfn=log.debug):
         logfn('Request ID: %s, Request to Cloud: method=%s, path=%s, headers="%s"' % (
-            self.evolve_request_id, method, path, headers)
+            self.request_id, method, path, headers)
         )
 
     def _log_http_exception(self, e):
-        log.error('Request ID: %s, HttpException: %s' % (self.evolve_request_id, repr(e)))
+        log.error('Request ID: %s, HttpException: %s' % (self.request_id, repr(e)))
     # }}}
 
 class ConnectionPool(Queue):
