@@ -430,7 +430,7 @@ class Connection(object):
         logfn('Request ID: %(request_id)s, %(method)s %(uri)s, headers="%(headers)s"' %
             dict(request_id=self.request_id,
                 method=method,
-                uri="%s:%s/%s" % (host, port, path),
+                uri="%s:%s%s" % (host, port, path),
                 headers=headers)
         )
 
