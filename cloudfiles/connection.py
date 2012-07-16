@@ -115,8 +115,8 @@ class Connection(object):
                    'X-Auth-Token': self.token}
         if isinstance(hdrs, dict):
             headers.update(hdrs)
-        
-        self._log_request('CDN', method, path, headers)
+
+        self._log_request(self.cdn_connection, method, path, headers)
         # Send the request
         self.cdn_connection.request(method, path, data, headers)
 
@@ -160,7 +160,7 @@ class Connection(object):
                    'X-Auth-Token': self.token}
         isinstance(hdrs, dict) and headers.update(hdrs)
         
-        self._log_request('Cloud Storage', method, path, headers)
+        self._log_request(self.connection, method, path, headers)
 
         def retry_request():
             '''Re-connect and re-try a failed request once'''
@@ -425,9 +425,13 @@ class Connection(object):
             "; ".join(["%s=%s" % (k, v) for (k, v) in response.getheaders()]))
         )
 
-    def _log_request(self, service, method, path, headers, logfn=log.debug):
-        logfn('Request ID: %s, Request to %s: method=%s, path=%s, headers="%s"' % (
-            self.request_id, service, method, path, headers)
+    def _log_request(self, connection, method, path, headers, logfn=log.debug):
+        host, port = connection.host, str(connection.port)
+        logfn('Request ID: %(request_id)s, %(method)s %(uri)s, headers="%(headers)s"' %
+            dict(request_id=self.request_id,
+                method=method,
+                uri="%s:%s/%s" % (host, port, path),
+                headers=headers)
         )
 
     def _log_http_exception(self, e):
