@@ -62,7 +62,11 @@ class Connection(object):
         self.auth = kwargs.has_key('auth') and kwargs['auth'] or None
 
         self.request_id = kwargs.get('request_id', None)
-        
+        # If disable_cdn is set to True,
+        # never make cdn requests regardless of whether cdn
+        # is turned on for the account.
+        self.disable_cdn = kwargs.get('disable_cdn', False)
+
         if not self.auth:
             authurl = kwargs.get('authurl', consts.default_authurl)
             if username and api_key and authurl:
@@ -81,7 +85,7 @@ class Connection(object):
         self.conn_class = self.connection_args[3] and HTTPSConnection or \
                                                       HTTPConnection
         self.http_connect()
-        if self.cdn_url:
+        if not self.disable_cdn and self.cdn_url:
             self.cdn_connect()
 
     def cdn_connect(self):
