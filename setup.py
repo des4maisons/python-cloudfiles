@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from distutils.core import setup
+from setuptools import setup
 setup(
     name='cloudfiles',
     version='1.3.1-freshbooks.3',
